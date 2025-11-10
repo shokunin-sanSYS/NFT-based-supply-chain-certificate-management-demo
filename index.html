@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book&Claim Certificate Management System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e27;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        /* タイトルバナー */
+        .title-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #01579b 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeOut 0.8s ease-in-out 2.5s forwards;
+        }
+
+        .title-banner h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 1rem;
+            text-align: center;
+            animation: slideIn 1s ease-out;
+        }
+
+        .title-banner p {
+            font-size: 1.3rem;
+            color: #b3d9ff;
+            animation: slideIn 1s ease-out 0.3s both;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        /* メインコンテンツ */
+        .main-content {
+            opacity: 0;
+            animation: fadeIn 1s ease-in-out 3s forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* ヘッダー */
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-tab {
+            padding: 0.6rem 1.2rem;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: #4fc3f7;
+            color: #000;
+        }
+
+        /* メインコンテナ */
+        .container {
+            max-width: 1600px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: pageSlideIn 0.5s ease-out;
+        }
+
+        @keyframes pageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* KPIカード */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(79, 195, 247, 0.2);
+            transition: all 0.3s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(79, 195, 247, 0.4);
+        }
+
+        .kpi-label {
+            font-size: 0.9rem;
+            color: #90caf9;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 0.3rem;
+        }
+
+        .kpi-change {
+            font-size: 0.85rem;
+            color: #81c784;
+        }
+
+        .kpi-change.negative {
+            color: #e57373;
+        }
+
+        /* アラートバナー */
+        .alert-banner {
+            background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.5);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .alert-text {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .alert-count {
+            background: #ffffff;
+            color: #d32f2f;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        /* チャートコンテナ */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: linear-gradient(135deg, #1a2332 0%, #252e42 100%);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(79, 195, 247, 0.15);
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid rgba(79, 195, 247, 0.3);
+        }
+
+        /* テーブル */
+        .data-table {
+            width: 100%;
+            background: linear-gradient(135deg, #1a2332 0%, #252e42 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .table-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 2px solid rgba(79, 195, 247, 0.3);
+        }
+
+        .table-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: rgba(79, 195, 247, 0.1);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            color: #90caf9;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: #e0e0e0;
+        }
+
+        tbody tr {
+            transition: background 0.3s;
+        }
+
+        tbody tr:hover {
+            background: rgba(79, 195, 247, 0.05);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-issued {
+            background: #4caf50;
+            color: #000;
+        }
+
+        .status-transferred {
+            background: #2196f3;
+            color: #fff;
+        }
+
+        .status-settled {
+            background: #9e9e9e;
+            color: #fff;
+        }
+
+        .status-pending {
+            background: #ff9800;
+            color: #000;
+        }
+
+        /* ボタン */
+        .btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.5);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+            color: #ffffff;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        /* フォーム */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            color: #90caf9;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .form-input, .form-select {
+            padding: 0.8rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(79, 195, 247, 0.3);
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 0.95rem;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #4fc3f7;
+            background: rgba(255,255,255,0.08);
+        }
+
+        /* レポートセクション */
+        .report-section {
+            margin-top: 2rem;
+        }
+
+        .report-output {
+            background: linear-gradient(135deg, #1a2332 0%, #252e42 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(79, 195, 247, 0.2);
+            min-height: 300px;
+            color: #e0e0e0;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        .compliance-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+            color: #fff;
+            border-radius: 20px;
+            font-weight: 600;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- タイトルバナー -->
+    <div class="title-banner">
+        <h1>Book&Claim Certificate Management System</h1>
+        <p>NFT台帳による証書発行・移転・清算の完全統合</p>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div class="main-content">
+        <header>
+            <div class="header-content">
+                <div class="logo">Book&Claim SCM</div>
+                <div class="nav-tabs">
+                    <button class="nav-tab active" onclick="showPage('dashboard')">ダッシュボード</button>
+                    <button class="nav-tab" onclick="showPage('certificates')">証書管理</button>
+                    <button class="nav-tab" onclick="showPage('settlement')">清算処理</button>
+                    <button class="nav-tab" onclick="showPage('reports')">レポート生成</button>
+                    <button class="nav-tab" onclick="showPage('compliance')">コンプライアンス</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- ダッシュボードページ -->
+            <div id="dashboard" class="page active">
+                <!-- アラートバナー -->
+                <div class="alert-banner">
+                    <span class="alert-text">二重計上リスク検知</span>
+                    <span class="alert-count">3件</span>
+                </div>
+
+                <!-- KPIカード -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">発行証書数（今月）</div>
+                        <div class="kpi-value" id="issuedCerts">0</div>
+                        <div class="kpi-change">前月比 +23%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">清算完了率</div>
+                        <div class="kpi-value" id="settlementRate">0%</div>
+                        <div class="kpi-change">目標達成率 105%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">処理時間短縮</div>
+                        <div class="kpi-value" id="timeReduction">0%</div>
+                        <div class="kpi-change">従来比 -80%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">ROI回収期間</div>
+                        <div class="kpi-value" id="roi">0</div>
+                        <div class="kpi-change negative">残り2ヶ月</div>
+                    </div>
+                </div>
+
+                <!-- チャート -->
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">証書発行トレンド（月次）</div>
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">証書タイプ別分布</div>
+                        <canvas id="typeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">清算ステータス</div>
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">処理時間推移（時間）</div>
+                        <canvas id="timeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 証書管理ページ -->
+            <div id="certificates" class="page">
+                <div class="data-table">
+                    <div class="table-header">
+                        <div class="table-title">証書一覧</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>証書ID</th>
+                                <th>タイプ</th>
+                                <th>発行日</th>
+                                <th>数量（t-CO2e）</th>
+                                <th>発行元</th>
+                                <th>ステータス</th>
+                                <th>アクション</th>
+                            </tr>
+                        </thead>
+                        <tbody id="certTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 清算処理ページ -->
+            <div id="settlement" class="page">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">証書ID</label>
+                        <input type="text" class="form-input" placeholder="NFT-2024-XXXX" id="settlementCertId">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">清算タイプ</label>
+                        <select class="form-select" id="settlementType">
+                            <option>自動清算</option>
+                            <option>手動清算</option>
+                            <option>バッチ清算</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">清算数量</label>
+                        <input type="number" class="form-input" placeholder="0.00" id="settlementAmount">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">対象期間</label>
+                        <input type="date" class="form-input" id="settlementDate">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="processSettlement()">清算実行</button>
+
+                <div style="margin-top: 2rem;">
+                    <div class="data-table">
+                        <div class="table-header">
+                            <div class="table-title">清算履歴</div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>処理日時</th>
+                                    <th>証書ID</th>
+                                    <th>清算数量</th>
+                                    <th>ステータス</th>
+                                    <th>処理時間</th>
+                                    <th>承認者</th>
+                                </tr>
+                            </thead>
+                            <tbody id="settlementHistoryBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- レポート生成ページ -->
+            <div id="reports" class="page">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">レポートタイプ</label>
+                        <select class="form-select" id="reportType">
+                            <option>月次サマリーレポート</option>
+                            <option>コンプライアンスレポート</option>
+                            <option>監査証跡レポート</option>
+                            <option>カスタムレポート</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">対象期間（開始）</label>
+                        <input type="date" class="form-input" id="reportStartDate">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">対象期間（終了）</label>
+                        <input type="date" class="form-input" id="reportEndDate">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">出力形式</label>
+                        <select class="form-select" id="reportFormat">
+                            <option>PDF</option>
+                            <option>Excel</option>
+                            <option>CSV</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="generateReport()">レポート生成</button>
+
+                <div class="report-section">
+                    <div class="report-output" id="reportOutput">
+レポート生成前
+                    </div>
+                </div>
+            </div>
+
+            <!-- コンプライアンスページ -->
+            <div id="compliance" class="page">
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">コンプライアンス適合率</div>
+                        <div class="kpi-value">100%</div>
+                        <div class="kpi-change">全項目クリア</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">監査ログ記録数</div>
+                        <div class="kpi-value" id="auditLogs">0</div>
+                        <div class="kpi-change">改ざん検知 0件</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">二重計上防止</div>
+                        <div class="kpi-value">稼働中</div>
+                        <div class="kpi-change">NFT台帳検証済</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">認証基準適合</div>
+                        <div class="kpi-value">3/3</div>
+                        <div class="kpi-change">DPP / FIT / IREC</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <div class="chart-container">
+                        <div class="chart-title">適合基準バッジ</div>
+                        <div style="padding: 1rem 0;">
+                            <span class="compliance-badge">DPP準拠</span>
+                            <span class="compliance-badge">FIT認証</span>
+                            <span class="compliance-badge">IREC整合</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <div class="data-table">
+                        <div class="table-header">
+                            <div class="table-title">監査ログ</div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>日時</th>
+                                    <th>アクション</th>
+                                    <th>ユーザー</th>
+                                    <th>証書ID</th>
+                                    <th>IPアドレス</th>
+                                    <th>検証結果</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditLogBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ページ切り替え
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // KPIアニメーション
+        function animateValue(id, start, end, duration, suffix = '') {
+            const obj = document.getElementById(id);
+            const range = end - start;
+            const increment = range / (duration / 16);
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    current = end;
+                    clearInterval(timer);
+                }
+                obj.textContent = Math.floor(current) + suffix;
+            }, 16);
+        }
+
+        // 初期化後にアニメーション開始
+        setTimeout(() => {
+            animateValue('issuedCerts', 0, 2847, 2000);
+            animateValue('settlementRate', 0, 96, 2000, '%');
+            animateValue('timeReduction', 0, 80, 2000, '%');
+            animateValue('roi', 0, 4, 2000, 'ヶ月');
+            animateValue('auditLogs', 0, 15420, 2000);
+        }, 3000);
+
+        // チャート設定
+        const chartColors = {
+            primary: '#2196f3',
+            success: '#4caf50',
+            warning: '#ff9800',
+            danger: '#f44336',
+            info: '#00bcd4'
+        };
+
+        // トレンドチャート
+        setTimeout(() => {
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            const trendData = {
+                labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月'],
+                datasets: [{
+                    label: '発行証書数',
+                    data: [1200, 1450, 1800, 2100, 2300, 2500, 2650, 2700, 2800, 2847],
+                    borderColor: chartColors.primary,
+                    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            };
+
+            new Chart(trendCtx, {
+                type: 'line',
+                data: trendData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#90caf9' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        x: {
+                            ticks: { color: '#90caf9' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+
+            // タイプ別チャート
+            const typeCtx = document.getElementById('typeChart').getContext('2d');
+            new Chart(typeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['再生材証書', '再エネ証書', 'カーボンクレジット'],
+                    datasets: [{
+                        data: [45, 35, 20],
+                        backgroundColor: [chartColors.primary, chartColors.success, chartColors.info]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#90caf9', padding: 15 }
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+
+            // ステータスチャート
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            new Chart(statusCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['発行済', '移転済', '清算済', '保留中'],
+                    datasets: [{
+                        label: '証書数',
+                        data: [850, 1200, 750, 47],
+                        backgroundColor: [chartColors.success, chartColors.primary, chartColors.info, chartColors.warning]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#90caf9' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        x: {
+                            ticks: { color: '#90caf9' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+
+            // 処理時間チャート
+            const timeCtx = document.getElementById('timeChart').getContext('2d');
+            new Chart(timeCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+                    datasets: [{
+                        label: '平均処理時間',
+                        data: [48, 42, 35, 28, 18, 9.6],
+                        borderColor: chartColors.success,
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#90caf9' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        x: {
+                            ticks: { color: '#90caf9' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }, 3000);
+
+        // 証書テーブルデータ
+        const certificates = [
+            { id: 'NFT-2024-3850', type: '再生材証書', date: '2024-10-28', amount: '12.5', issuer: '住友化学', status: 'issued' },
+            { id: 'NFT-2024-3849', type: '再エネ証書', date: '2024-10-27', amount: '25.0', issuer: '三井物産', status: 'transferred' },
+            { id: 'NFT-2024-3848', type: 'カーボンクレジット', date: '2024-10-27', amount: '8.3', issuer: '旭化成', status: 'settled' },
+            { id: 'NFT-2024-3847', type: '再生材証書', date: '2024-10-26', amount: '15.7', issuer: '三菱ケミカル', status: 'pending' },
+            { id: 'NFT-2024-3846', type: '再エネ証書', date: '2024-10-25', amount: '30.2', issuer: '伊藤忠商事', status: 'issued' }
+        ];
+
+        function populateCertTable() {
+            const tbody = document.getElementById('certTableBody');
+            certificates.forEach(cert => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${cert.id}</td>
+                    <td>${cert.type}</td>
+                    <td>${cert.date}</td>
+                    <td>${cert.amount}</td>
+                    <td>${cert.issuer}</td>
+                    <td><span class="status-badge status-${cert.status}">${getStatusText(cert.status)}</span></td>
+                    <td><button class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.85rem;">詳細</button></td>
+                `;
+            });
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'issued': '発行済',
+                'transferred': '移転済',
+                'settled': '清算済',
+                'pending': '保留中'
+            };
+            return statusMap[status] || status;
+        }
+
+        // 清算履歴データ
+        const settlements = [
+            { datetime: '2024-10-28 14:32', certId: 'NFT-2024-3848', amount: '8.3', status: '完了', time: '2.3秒', approver: '田中太郎' },
+            { datetime: '2024-10-27 16:45', certId: 'NFT-2024-3842', amount: '12.1', status: '完了', time: '1.8秒', approver: '佐藤花子' },
+            { datetime: '2024-10-27 11:20', certId: 'NFT-2024-3838', amount: '20.5', status: '完了', time: '2.1秒', approver: '鈴木一郎' },
+            { datetime: '2024-10-26 09:15', certId: 'NFT-2024-3830', amount: '15.0', status: '完了', time: '1.9秒', approver: '高橋美咲' }
+        ];
+
+        function populateSettlementHistory() {
+            const tbody = document.getElementById('settlementHistoryBody');
+            settlements.forEach(settlement => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${settlement.datetime}</td>
+                    <td>${settlement.certId}</td>
+                    <td>${settlement.amount} t-CO2e</td>
+                    <td><span class="status-badge status-settled">${settlement.status}</span></td>
+                    <td>${settlement.time}</td>
+                    <td>${settlement.approver}</td>
+                `;
+            });
+        }
+
+        // 監査ログデータ
+        const auditLogs = [
+            { datetime: '2024-10-28 14:32:18', action: '証書清算', user: '田中太郎', certId: 'NFT-2024-3848', ip: '192.168.1.45', result: '成功' },
+            { datetime: '2024-10-28 14:30:52', action: '証書移転', user: '佐藤花子', certId: 'NFT-2024-3849', ip: '192.168.1.82', result: '成功' },
+            { datetime: '2024-10-28 14:28:33', action: '証書発行', user: '鈴木一郎', certId: 'NFT-2024-3850', ip: '192.168.1.103', result: '成功' },
+            { datetime: '2024-10-28 14:25:10', action: 'レポート生成', user: '高橋美咲', certId: '-', ip: '192.168.1.67', result: '成功' },
+            { datetime: '2024-10-28 14:22:45', action: '証書検証', user: 'システム', certId: 'NFT-2024-3847', ip: '127.0.0.1', result: '成功' }
+        ];
+
+        function populateAuditLog() {
+            const tbody = document.getElementById('auditLogBody');
+            auditLogs.forEach(log => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${log.datetime}</td>
+                    <td>${log.action}</td>
+                    <td>${log.user}</td>
+                    <td>${log.certId}</td>
+                    <td>${log.ip}</td>
+                    <td><span class="status-badge status-issued">${log.result}</span></td>
+                `;
+            });
+        }
+
+        // 清算処理実行
+        function processSettlement() {
+            const certId = document.getElementById('settlementCertId').value;
+            const amount = document.getElementById('settlementAmount').value;
+            
+            if (!certId || !amount) {
+                alert('証書IDと清算数量を入力してください');
+                return;
+            }
+
+            alert(`清算処理を開始しました\n証書ID: ${certId}\n数量: ${amount} t-CO2e\n\n処理時間: 約2秒`);
+            
+            // フォームリセット
+            document.getElementById('settlementCertId').value = '';
+            document.getElementById('settlementAmount').value = '';
+        }
+
+        // レポート生成
+        function generateReport() {
+            const reportType = document.getElementById('reportType').value;
+            const startDate = document.getElementById('reportStartDate').value;
+            const endDate = document.getElementById('reportEndDate').value;
+            const format = document.getElementById('reportFormat').value;
+
+            const reportOutput = document.getElementById('reportOutput');
+            
+            reportOutput.innerHTML = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ${reportType}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+【レポート期間】
+  ${startDate || '2024-10-01'} 〜 ${endDate || '2024-10-31'}
+
+【サマリー】
+  総発行証書数: 2,847件
+  清算完了率: 96.2%
+  平均処理時間: 9.6時間（従来比 -80%）
+  二重計上検知: 0件
+  
+【証書タイプ別内訳】
+  再生材証書: 1,281件（45%）
+  再エネ証書: 996件（35%）
+  カーボンクレジット: 570件（20%）
+
+【清算実績】
+  完了件数: 2,740件
+  保留件数: 107件
+  総清算量: 142,350 t-CO2e
+
+【コンプライアンス】
+  DPP準拠: ✓ 適合
+  FIT認証: ✓ 適合
+  IREC整合: ✓ 適合
+  監査ログ記録: 15,420件
+  改ざん検知: 0件
+
+【ROI分析】
+  導入コスト: ¥9,000,000
+  月間削減コスト: ¥2,250,000
+  回収期間: 4ヶ月
+  年間効果: ¥27,000,000
+
+【次のアクション】
+  1. 保留証書107件の処理完了
+  2. 新規発行元3社のオンボーディング
+  3. 第3四半期監査準備
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  生成日時: ${new Date().toLocaleString('ja-JP')}
+  出力形式: ${format}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            `;
+        }
+
+        // 初期化
+        setTimeout(() => {
+            populateCertTable();
+            populateSettlementHistory();
+            populateAuditLog();
+        }, 3000);
+    </script>
+</body>
+</html>
